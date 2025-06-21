@@ -1,6 +1,10 @@
 import CompanyLogo from "@/components/home/company-logo";
+import FeaturesSection from "@/components/home/features-section";
 import Hero from "@/components/home/hero-section";
+import MonitorSection from "@/components/home/monitor-section";
 import Navbar from "@/components/home/navbar";
+import PurposeSection from "@/components/home/purpose-section";
+import ScheduleSection from "@/components/home/schedule-section";
 
 export default function Home() {
   return (
@@ -10,6 +14,10 @@ export default function Home() {
         <Navbar />
         <Hero />
         <CompanyLogo />
+        <PurposeSection />
+        <FeaturesSection />
+        <ScheduleSection />
+        <MonitorSection />
       </div>
     </main>
   );

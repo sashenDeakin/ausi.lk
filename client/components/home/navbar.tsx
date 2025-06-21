@@ -10,8 +10,8 @@ const Navbar = () => {
   const [activeLink, setActiveLink] = useState("#home");
 
   const navLinks = [
-    { href: "#home", label: "Home" },
-    { href: "#about", label: "About Us" },
+    { href: "/", label: "Home" },
+    { href: "/product", label: "Product Check" },
     { href: "#services", label: "Our Service" },
     { href: "#testimonials", label: "Testimonials" },
   ];
