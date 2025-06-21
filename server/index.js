@@ -1,91 +1,92 @@
-import puppeteer from "puppeteer";
+import express from "express";
+import cors from "cors";
+import puppeteer from "puppeteer"; // Use puppeteer (not puppeteer-core)
 
-(async () => {
-  const browser = await puppeteer.launch({
-    headless: false, // set to true if you don't want to see the browser
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    executablePath:
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", // adjust if needed
-  });
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-  const page = await browser.newPage();
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json());
 
-  // Set user agent to reduce bot detection
-  await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-  );
+app.get("/scrape", async (req, res) => {
+  const productUrl = req.query.url;
 
-  await page.goto(
-    "https://www.chemistwarehouse.com.au/buy/105735/blackmores-vitamin-b6-100mg-40-tablets",
-    { waitUntil: "networkidle2" }
-  );
-
-  // Wait for network idle and extra delay for full JS load
-  await page.waitForNetworkIdle({ idleTime: 2000, timeout: 60000 });
-  await new Promise((r) => setTimeout(r, 3000));
-
-  // Save screenshot to check what is rendered
-  await page.screenshot({ path: "page.png", fullPage: true });
-  console.log("Screenshot saved as page.png");
-
-  // Try to get title: direct selector, fallback to meta tag
-  let title = await page
-    .$eval("h1.product-title", (el) => el.textContent.trim())
-    .catch(() => null);
-  if (!title) {
-    title = await page
-      .$eval('meta[property="og:title"]', (el) => el.content)
-      .catch(() => null);
+  if (!productUrl) {
+    return res.status(400).json({ error: "Missing `url` query parameter." });
   }
 
-  if (!title) {
-    console.log("Product title not found");
-    await browser.close();
-    return;
-  }
+  try {
+    const browser = await puppeteer.launch({
+      executablePath:
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
 
-  console.log("Product Title:", title);
+    const page = await browser.newPage();
 
-  // Helper to get first matching selector text
-  async function extractFirstMatchingText(pageOrFrame, selectors) {
-    for (const sel of selectors) {
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+    );
+
+    await page.goto(productUrl, {
+      waitUntil: "networkidle2",
+      timeout: 60000,
+    });
+
+    await new Promise((r) => setTimeout(r, 3000)); // Wait for content to fully load
+
+    const extractText = async (selectors) => {
+      for (const sel of selectors) {
+        try {
+          const text = await page.$eval(sel, (el) => el.textContent.trim());
+          if (text) return text;
+        } catch {}
+      }
+      return null;
+    };
+
+    const extractImage = async () => {
       try {
-        const text = await pageOrFrame.$eval(sel, (el) =>
-          el.textContent.trim()
+        const img = await page.$(
+          "div.w-full.overflow-hidden button:nth-child(1) img"
         );
-        if (text) return text;
+        if (img) {
+          const src = await page.evaluate((el) => el.getAttribute("src"), img);
+          return src?.startsWith("http")
+            ? src
+            : `https://www.chemistwarehouse.com.au${src}`;
+        }
       } catch {}
-    }
-    return null;
+      return null;
+    };
+
+    const title =
+      (await extractText(["h1.product-title"])) ||
+      (await page
+        .$eval('meta[property="og:title"]', (el) => el.content)
+        .catch(() => null)) ||
+      "Title not found";
+
+    const price =
+      (await extractText([
+        ".product-price-now",
+        ".product-price",
+        ".price",
+        "h2.display-l.text-colour-title-light",
+      ])) || "Price not found";
+
+    const image = (await extractImage()) || "Image not found";
+
+    await browser.close();
+
+    res.json({ title, price, image });
+  } catch (err) {
+    console.error("Scrape error:", err.message);
+    res.status(500).json({ error: "Scraping failed." });
   }
+});
 
-  // Possible price selectors
-  const priceSelectors = [
-    ".product-price-now",
-    ".product-price",
-    ".price",
-    ".product-pricing__price",
-    ".product-info-price",
-    "h2.display-l.text-colour-title-light",
-  ];
-  // Possible description selectors
-  const descriptionSelectors = [
-    "#productDescription",
-    ".product-description",
-    ".tab-pane.active #productDescription",
-    ".tab-pane.active .product-description",
-    ".description-text",
-    ".product-details-description",
-  ];
-
-  const price =
-    (await extractFirstMatchingText(page, priceSelectors)) || "Price not found";
-  const description =
-    (await extractFirstMatchingText(page, descriptionSelectors)) ||
-    "Description not found";
-
-  console.log("Price:", price);
-  console.log("Description:", description);
-
-  await browser.close();
-})();
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
