@@ -3,8 +3,8 @@ import FeaturesSection from "@/components/home/features-section";
 import Hero from "@/components/home/hero-section";
 import MonitorSection from "@/components/home/monitor-section";
 import Navbar from "@/components/home/navbar";
-import PurposeSection from "@/components/home/purpose-section";
 import ScheduleSection from "@/components/home/schedule-section";
+import ShippingCountdown from "@/components/home/ShippingCountdown";
 
 export default function Home() {
   return (
@@ -14,7 +14,10 @@ export default function Home() {
         <Navbar />
         <Hero />
         <CompanyLogo />
-        <PurposeSection />
+        <section id="about" className="w-full bg-gray-50 py-16 px-4 md:px-8">
+          <ShippingCountdown targetDate="2025-06-25T10:00:00" />
+        </section>
+        {/*    <PurposeSection /> */}
         <FeaturesSection />
         <ScheduleSection />
         <MonitorSection />

@@ -3,11 +3,15 @@
 import { fadeIn } from "@/utils/motion";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { HiMenu, HiX } from "react-icons/hi";
+import { HiMenu, HiX, HiShoppingCart } from "react-icons/hi";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import Link from "next/link";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("#home");
+  const cartItems = useSelector((state: RootState) => state.bucket.products);
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -39,18 +43,6 @@ const Navbar = () => {
             className="w-4 h-4 bg-red-500 rounded-full -ml-2 hover:opacity-75 transition-opacity"
           ></motion.div>
         </motion.div>
-        {/* Mobile Menu Button */}
-        <motion.button
-          variants={fadeIn("left", 0.3)}
-          className="md:hidden p-2"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? (
-            <HiX className="h-6 w-6" />
-          ) : (
-            <HiMenu className="h-6 w-6" />
-          )}
-        </motion.button>
 
         {/* Navigation Links - Desktop */}
         <motion.div
@@ -66,7 +58,7 @@ const Navbar = () => {
               className={`text-sm font-medium relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-blue-600 after:transition-all
               ${
                 activeLink === link.href
-                  ? "text-blue-600 after:w-full  "
+                  ? "text-blue-600 after:w-full"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
@@ -75,15 +67,47 @@ const Navbar = () => {
           ))}
         </motion.div>
 
-        {/* CTA Button */}
-        <motion.button
-          variants={fadeIn("left", 0.3)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="hidden md:block bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-100"
-        >
-          <a href="#newsletter">Get in touch</a>
-        </motion.button>
+        {/* Right Side Items */}
+        <div className="flex items-center gap-4">
+          {/* Cart Icon with Count */}
+          <motion.div
+            variants={fadeIn("left", 0.3)}
+            whileHover={{ scale: 1.05 }}
+            className="relative"
+          >
+            <Link href="/product" className="p-2 flex items-center">
+              <HiShoppingCart className="h-5 w-5 text-gray-700" />
+              {cartItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartItems.length > 9 ? "9+" : cartItems.length}
+                </span>
+              )}
+            </Link>
+          </motion.div>
+
+          {/* CTA Button */}
+          <motion.button
+            variants={fadeIn("left", 0.3)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="hidden md:block bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 text-sm font-medium transition-all hover:shadow-lg hover:shadow-blue-100"
+          >
+            <a href="#newsletter">Get in touch</a>
+          </motion.button>
+
+          {/* Mobile Menu Button */}
+          <motion.button
+            variants={fadeIn("left", 0.3)}
+            className="md:hidden p-2"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <HiX className="h-6 w-6" />
+            ) : (
+              <HiMenu className="h-6 w-6" />
+            )}
+          </motion.button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
