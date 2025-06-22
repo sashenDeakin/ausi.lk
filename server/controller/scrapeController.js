@@ -9,10 +9,14 @@ export const scrapeProduct = async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      executablePath:
-        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: "new", // Use the new Headless mode
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage", // Important for EC2
+        "--single-process", // May help with memory issues
+      ],
+      executablePath: "/usr/bin/chromium-browser", // Default path for chromium on Amazon Linux
     });
 
     const page = await browser.newPage();
