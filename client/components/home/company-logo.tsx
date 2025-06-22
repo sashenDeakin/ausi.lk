@@ -3,9 +3,10 @@ import coles from "../../public/assets/coles.png";
 import jbhifi from "../../public/assets/jbhifi.png";
 import woolworths from "../../public/assets/woolworths.png";
 import officeworks from "../../public/assets/officeworks.png";
+import chemest from "../../public/assets/chemist.webp";
 
 const CompanyLogo = () => {
-  const logos = [coles, jbhifi, woolworths, officeworks];
+  const logos = [coles, jbhifi, woolworths, officeworks, chemest];
 
   return (
     <div className="w-full container mx-auto py-20 overflow-hidden flex  flex-col sm:flex-row sm:items-center items-start ">

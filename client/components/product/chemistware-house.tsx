@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { addProduct } from "@/store/bucketSlice";
@@ -20,6 +21,7 @@ interface ScrapeResult {
   price: string;
   image: string | null;
   url?: string;
+  retailer: string;
 }
 
 const ChemistWareHouse = () => {
@@ -55,16 +57,34 @@ const ChemistWareHouse = () => {
       return;
     }
 
-    if (!url.includes("chemistwarehouse.com.au")) {
-      setError("Please enter a valid Chemist Warehouse URL.");
+    let apiEndpoint;
+    let retailer = "";
+
+    if (url.includes("chemistwarehouse.com.au")) {
+      apiEndpoint = `http://localhost:5000/api/chemist/scrape?url=${encodeURIComponent(
+        url
+      )}`;
+      retailer = "Chemist Warehouse";
+    } else if (url.includes("coles.com.au")) {
+      apiEndpoint = `http://localhost:5000/api/coles/scrape?url=${encodeURIComponent(
+        url
+      )}`;
+      retailer = "Coles";
+    } else if (url.includes("jbhifi.com.au")) {
+      apiEndpoint = `http://localhost:5000/api/jbhifi/scrape?url=${encodeURIComponent(
+        url
+      )}`;
+      retailer = "JB Hi-Fi";
+    } else {
+      setError(
+        "Please enter a valid retailer URL (Chemist Warehouse, Coles, or JB Hi-Fi)."
+      );
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:5000/scrape?url=${encodeURIComponent(url)}`
-      );
+      const response = await fetch(apiEndpoint);
       const result = await response.json();
 
       if (!response.ok) {
@@ -76,6 +96,7 @@ const ChemistWareHouse = () => {
         price: result.price || "No price found",
         image: result.image || null,
         url: url,
+        retailer: retailer,
       });
     } catch (error) {
       setError((error as Error).message || "An error occurred while scraping");
@@ -92,6 +113,7 @@ const ChemistWareHouse = () => {
           price: data.price,
           image: data.image!,
           url: data.url,
+          retailer: data.retailer,
         })
       );
       setUrl("");
@@ -110,6 +132,19 @@ const ChemistWareHouse = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Get retailer logo path
+  const getRetailerLogo = (retailer: string) => {
+    switch (retailer) {
+      case "Coles":
+        return "/assets/coles.png";
+      case "JB Hi-Fi":
+        return "/assets/jbhifi.png";
+      case "Chemist Warehouse":
+      default:
+        return "/assets/partner_chemistwarehouse.webp";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-transparent relative">
       {/* Hero Section */}
@@ -119,10 +154,6 @@ const ChemistWareHouse = () => {
         whileInView="show"
         viewport={{ once: true }}
       >
-        <div className="absolute inset-0 overflow-hidden opacity-20">
-          <div className="absolute top-0 left-0 w-full h-full bg-transparent"></div>
-        </div>
-
         <motion.div
           variants={staggerContainer()}
           className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
@@ -133,7 +164,7 @@ const ChemistWareHouse = () => {
               className="text-4xl md:text-6xl font-bold text-gray-900 mb-6"
             >
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-                Chemist Warehouse
+                Price Scraper
               </span>
             </motion.h1>
 
@@ -141,7 +172,7 @@ const ChemistWareHouse = () => {
               variants={textVariant(0.4)}
               className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto"
             >
-              Find the best deals and save them to your bucket instantly
+              Find the best deals from top retailers
             </motion.p>
 
             <motion.div
@@ -152,7 +183,7 @@ const ChemistWareHouse = () => {
                 <input
                   type="text"
                   className="flex-1 border-0 rounded-l-full px-6 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-400"
-                  placeholder="Paste Chemist Warehouse product URL..."
+                  placeholder="Paste product URL from supported retailers..."
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleScrape()}
@@ -253,7 +284,16 @@ const ChemistWareHouse = () => {
                     className="border border-gray-200 rounded-lg overflow-hidden"
                   >
                     <div className="md:flex">
-                      <div className="md:w-1/3 bg-gray-50 flex items-center justify-center p-6 min-h-64">
+                      <div className="md:w-1/3 bg-gray-50 flex items-center justify-center p-6 min-h-64 relative">
+                        {/* Retailer Logo */}
+                        <div className="absolute top-3 left-3 bg-white/80 rounded-lg p-1 shadow-sm z-10">
+                          <img
+                            src={getRetailerLogo(data.retailer)}
+                            alt={data.retailer}
+                            className="h-6 w-auto object-contain"
+                          />
+                        </div>
+
                         {data.image ? (
                           <motion.img
                             src={data.image}
@@ -330,7 +370,7 @@ const ChemistWareHouse = () => {
                       No product loaded
                     </h3>
                     <p className="mt-1 text-gray-500">
-                      Enter a Chemist Warehouse URL to get started
+                      Enter a product URL from supported retailers
                     </p>
                     <div className="mt-6">
                       <button

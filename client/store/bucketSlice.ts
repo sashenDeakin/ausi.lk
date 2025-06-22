@@ -5,6 +5,7 @@ interface Product {
   price: string;
   image: string | null;
   url?: string;
+  retailer: string;
 }
 
 interface BucketState {
